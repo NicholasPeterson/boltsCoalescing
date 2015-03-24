@@ -27,19 +27,20 @@
     if (!taskSource) {
         taskSource = [self.taskStore addTaskSourceForMethod:@"GET" URL:URLString parameters:params];
 
+        __weak __typeof__(self) weakSelf = self; //TODO: Macro this
         [self.requestManager GET:URLString parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            __strong __typeof__(self) strongSelf = weakSelf;
+
+            [strongSelf.taskStore removeTaskSourceForMethod:@"GET" URL:URLString parameters:params];
             [taskSource setResult:responseObject];
+
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            __strong __typeof__(self) strongSelf = weakSelf;
+
+            [strongSelf.taskStore removeTaskSourceForMethod:@"GET" URL:URLString parameters:params];
             [taskSource setError:error];
         }];
     }
-    
-    //Remove the task when the chain starts
-    BFTask *task = taskSource.task;
-    [task continueWithBlock:^id(BFTask *task) {
-        [self.taskStore removeTaskSourceForMethod:@"GET" URL:URLString parameters:params];
-        return task;
-    }];
 
     return taskSource.task;
 }
